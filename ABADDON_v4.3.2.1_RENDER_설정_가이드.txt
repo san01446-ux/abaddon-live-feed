@@ -1,0 +1,94 @@
+ABADDON v4.3.2.1 Render 실시간 피드 설정 가이드
+=================================================
+
+구조
+----
+기존 Background Worker (Discord 봇)
+  -> 비밀키 인증 POST
+별도 Web Service (공개 피드 API)
+  -> 읽기 전용 GET
+GitHub Pages 공식 홈페이지
+
+A. 별도 GitHub 저장소 만들기
+----------------------------
+1. GitHub에서 새 저장소를 만듭니다. 권장 이름: abaddon-live-feed
+2. ABADDON_LIVE_FEED_SERVICE_v4.3.2.1.zip을 압축 해제합니다.
+3. 압축 안의 파일을 새 저장소 최상위 루트에 업로드합니다.
+4. 저장소 루트에 render.yaml, README_DEPLOY_KO.md, abaddon_feed_service 폴더가 직접 보여야 합니다.
+
+B. Render Web Service 만들기
+----------------------------
+1. Render에서 + New -> Web Service를 선택합니다.
+2. 위에서 만든 abaddon-live-feed 저장소를 연결합니다.
+3. 다음처럼 설정합니다.
+   Name: abaddon-live-feed
+   Runtime: Python 3
+   Build Command: echo ready
+   Start Command: python -m abaddon_feed_service.app
+   Health Check Path: /healthz
+   Root Directory: 비워두기
+4. 환경변수를 추가합니다.
+   ABADDON_FEED_SECRET=32자 이상의 임의 비밀문자열
+   PUBLIC_FEED_ALLOWED_ORIGIN=https://san01446-ux.github.io
+   FEED_OFFLINE_AFTER_SECONDS=150
+5. Create Web Service를 누르고 배포 완료를 기다립니다.
+6. 생성된 주소를 복사합니다. 예: https://abaddon-live-feed.onrender.com
+
+주의:
+- 이 Web Service에는 DISCORD_TOKEN을 절대 넣지 않습니다.
+- DATA_FILE과 survival_data.json도 넣지 않습니다.
+- 기존 Background Worker를 삭제하거나 Web Service로 바꾸지 않습니다.
+- 홈페이지 주소가 다른 도메인이면 PUBLIC_FEED_ALLOWED_ORIGIN을 그 도메인의 origin으로 바꿉니다.
+- GitHub Pages 주소가 https://san01446-ux.github.io/abaddon-policy/ 라면 origin은
+  https://san01446-ux.github.io 입니다. /abaddon-policy 경로는 붙이지 않습니다.
+
+C. 기존 Background Worker 환경변수
+-----------------------------------
+기존 Discord 봇 Background Worker에 다음을 추가합니다.
+
+PUBLIC_FEED_ENABLED=1
+PUBLIC_FEED_RELAY_URL=https://abaddon-live-feed.onrender.com
+PUBLIC_FEED_RELAY_KEY=Web Service의 ABADDON_FEED_SECRET과 완전히 같은 값
+PUBLIC_FEED_HTTP_MODE=off
+PUBLIC_FEED_HEARTBEAT_SECONDS=45
+PUBLIC_FEED_SHOW_GUILD=0
+
+기존 PUBLIC_BASE_URL은 더 이상 필요하지 않으므로 제거해도 됩니다.
+기존 PUBLIC_FEED_ALLOWED_ORIGIN도 Background Worker에서는 필요하지 않습니다.
+환경변수 저장 후 Background Worker를 재배포합니다.
+
+D. 홈페이지 연결
+----------------
+홈페이지 config.js에서 다음 값을 새 Web Service 주소로 바꿉니다.
+
+  eventFeedUrl: "https://abaddon-live-feed.onrender.com",
+
+그다음 홈페이지 v4.3.2.1 ZIP의 파일을 GitHub Pages 저장소 최상위 루트에 덮어씁니다.
+
+E. 확인 순서
+------------
+1. 브라우저에서 https://abaddon-live-feed.onrender.com/healthz 접속
+   secret_configured가 true인지 확인합니다.
+2. Discord에서 !실시간피드상태 실행
+3. Discord에서 !실시간피드테스트 실행
+4. 브라우저에서 /api/events?limit=8 접속해 테스트 이벤트 확인
+5. 홈페이지를 새로고침해 ONLINE과 이벤트가 표시되는지 확인
+
+오류별 확인
+-----------
+401 unauthorized:
+  두 서비스의 비밀키 값이 서로 다릅니다.
+
+503 ABADDON_FEED_SECRET_not_configured:
+  Web Service에 ABADDON_FEED_SECRET이 없거나 24자보다 짧습니다.
+
+홈페이지 신호 두절/CORS 오류:
+  Web Service의 PUBLIC_FEED_ALLOWED_ORIGIN에 GitHub Pages origin을 정확히 입력합니다.
+
+홈페이지 STARTING 또는 OFFLINE:
+  Background Worker 재배포 후 최대 45초 기다리고 !실시간피드테스트를 실행합니다.
+
+실시간 기록이 재배포 후 사라짐:
+  기본 Web Service 저장소는 메모리 방식입니다. 기록 영구 보존이 필요하면 별도 유료 Persistent Disk를
+  Web Service에 연결한 뒤 FEED_DATA_FILE=/var/data/abaddon_feed.json을 설정할 수 있습니다.
+  이 디스크는 survival_data.json과 완전히 별개입니다.
