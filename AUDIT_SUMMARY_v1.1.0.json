@@ -1,0 +1,15 @@
+{
+  "version": "1.1.0",
+  "python_syntax_errors": 0,
+  "tested_routes": [
+    "/health",
+    "/auth/discord",
+    "/api/worker/index",
+    "/api/control/pull",
+    "/api/control/result",
+    "/api/leaderboard"
+  ],
+  "oauth_route_returns_redirect_when_configured": true,
+  "worker_action_roundtrip_local_test": true,
+  "third_party_dependencies": 0
+}
