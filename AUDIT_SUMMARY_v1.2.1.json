@@ -1,0 +1,12 @@
+{
+  "version": "1.2.1",
+  "focus": "dashboard snapshot/cache/supersede relay latency hotfix",
+  "checks": {
+    "GET /health": "200 / version 1.2.1",
+    "GET /api/dashboard/snapshot": "relay + cache",
+    "GET /api/dashboard/commands": "global response cache",
+    "stale_queued_reads": "superseded",
+    "worker_version_cache_invalidation": "enabled",
+    "worker_result_body_limit": "4MB / large command catalogue PASS"
+  }
+}

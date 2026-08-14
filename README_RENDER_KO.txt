@@ -1,4 +1,4 @@
-ABADDON LIVE FEED v1.2.0 · OAUTH DASHBOARD + LIVE FEED
+ABADDON LIVE FEED v1.2.1 · FAST DASHBOARD RELAY + OAUTH + LIVE FEED
 
 이 ZIP은 `abaddon-live-feed` Render Web Service용입니다.
 `apocalypse-bot` Background Worker에 올리는 파일이 아닙니다.
@@ -26,7 +26,15 @@ python live_feed_server.py
 OAuth2 Redirects에 아래 주소가 정확히 등록되어 있어야 합니다.
 https://abaddon-live-feed.onrender.com/auth/callback
 
-[v1.2.0 변경]
+[v1.2.1 변경]
+- /api/dashboard/snapshot 추가: 서버별 읽기 5개를 1개 Worker 요청으로 통합
+- snapshot 12초 캐시 + commands 1시간 캐시
+- 빠른 서버 이동 시 아직 Worker가 잡지 않은 이전 읽기 요청 supersede
+- Worker 버전 변경 시 캐시 자동 초기화
+- 1,489+ 명령어 카탈로그 결과가 잘리지 않도록 Worker result JSON 본문 한도 4MB
+- 대시보드 relay 대기시간 15초로 단축해 멈춘 요청을 빨리 복구
+
+[v1.2.0 기반 유지]
 - Render HEAD /health 요청 200 응답 지원
 - 한국어 OAuth -> /dashboard.html
 - English OAuth -> /en/dashboard.html
@@ -36,7 +44,7 @@ https://abaddon-live-feed.onrender.com/auth/callback
 
 [확인 순서]
 1. https://abaddon-live-feed.onrender.com/health 접속
-2. version 1.2.0 확인
+2. version 1.2.1 확인
 3. BOT 배포 후 worker_online true 확인 (보통 다음 Worker poll/heartbeat 이후)
 4. Discord에서 !웹연결진단 또는 !webdiag
 5. 홈페이지 Dashboard -> Discord 로그인

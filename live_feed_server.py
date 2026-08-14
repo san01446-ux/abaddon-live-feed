@@ -13,12 +13,13 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
-VERSION = "1.2.0"
+VERSION = "1.2.1"
 MAX_EVENTS = 120
+MAX_BODY_BYTES = 4 * 1024 * 1024
 SESSION_TTL = 60 * 60 * 12
 STATE_TTL = 10 * 60
 ACTION_TTL = 90
-ACTION_WAIT_SECONDS = 35
+ACTION_WAIT_SECONDS = 15
 
 LOCK = threading.RLock()
 EVENTS: list[dict[str, Any]] = []
@@ -27,6 +28,9 @@ WORKER_INDEX: dict[str, Any] = {"guilds": [], "version": "unknown", "online": Fa
 SESSIONS: dict[str, dict[str, Any]] = {}
 OAUTH_STATES: dict[str, dict[str, Any]] = {}
 ACTIONS: dict[str, dict[str, Any]] = {}
+RESPONSE_CACHE: dict[str, dict[str, Any]] = {}
+CACHE_TTL = {"dashboard_snapshot_get": 12.0, "commands_get": 60.0 * 60.0}
+SUPERSEDE_READ_OPS = {"dashboard_snapshot_get", "commands_get"}
 
 
 def _safe_int(value: Any, default: int = 0) -> int:
@@ -78,6 +82,46 @@ def _cleanup() -> None:
             elif not done_at and created + ACTION_TTL * 3 <= now:
                 ACTIONS.pop(key, None)
 
+
+
+
+def _cache_key(op: str, guild_id: str = "") -> str:
+    return f"{str(op)}:{str(guild_id or '')}"
+
+
+def _cache_get(op: str, guild_id: str = "") -> Optional[dict[str, Any]]:
+    key = _cache_key(op, guild_id)
+    ttl = float(CACHE_TTL.get(str(op), 0) or 0)
+    if ttl <= 0:
+        return None
+    now = time.time()
+    with LOCK:
+        row = RESPONSE_CACHE.get(key)
+        if not isinstance(row, dict):
+            return None
+        if now - float(row.get("stored_at", 0) or 0) > ttl:
+            RESPONSE_CACHE.pop(key, None)
+            return None
+        value = row.get("value")
+        return dict(value) if isinstance(value, dict) else None
+
+
+def _cache_put(op: str, guild_id: str, value: Mapping[str, Any]) -> None:
+    if not bool(value.get("ok")) or str(op) not in CACHE_TTL:
+        return
+    with LOCK:
+        RESPONSE_CACHE[_cache_key(op, guild_id)] = {"stored_at": time.time(), "value": dict(value)}
+
+
+def _cache_invalidate_guild(guild_id: str) -> None:
+    gid = str(guild_id or "")
+    with LOCK:
+        RESPONSE_CACHE.pop(_cache_key("dashboard_snapshot_get", gid), None)
+
+
+def _cache_clear_commands() -> None:
+    with LOCK:
+        RESPONSE_CACHE.pop(_cache_key("commands_get", ""), None)
 
 def _http_json(url: str, *, method: str = "GET", headers: Optional[Mapping[str, str]] = None, data: Optional[bytes] = None, timeout: int = 15) -> Any:
     req = urllib_request.Request(url, data=data, method=method, headers=dict(headers or {}))
@@ -174,14 +218,32 @@ def _worker_fresh() -> bool:
 def _enqueue(op: str, *, user_id: str = "", guild_id: str = "", payload: Optional[Mapping[str, Any]] = None) -> tuple[str, threading.Event]:
     action_id = "act_" + secrets.token_urlsafe(18)
     event = threading.Event()
+    op = str(op)
+    user_id = str(user_id or "")
+    guild_id = str(guild_id or "")
+    now = time.time()
     with LOCK:
+        # Rapid server switching can otherwise build a queue of stale reads.
+        # Supersede only requests that have not been leased by the Worker yet.
+        if op in SUPERSEDE_READ_OPS and user_id:
+            for row in ACTIONS.values():
+                if str(row.get("status") or "") != "queued":
+                    continue
+                if str(row.get("op") or "") != op or str(row.get("user_id") or "") != user_id:
+                    continue
+                row["status"] = "done"
+                row["result"] = {"ok": False, "error": "superseded"}
+                row["done_at"] = now
+                old_event = row.get("event")
+                if isinstance(old_event, threading.Event):
+                    old_event.set()
         ACTIONS[action_id] = {
             "id": action_id,
-            "op": str(op),
-            "user_id": str(user_id or ""),
-            "guild_id": str(guild_id or ""),
+            "op": op,
+            "user_id": user_id,
+            "guild_id": guild_id,
             "payload": dict(payload or {}),
-            "created": time.time(),
+            "created": now,
             "status": "queued",
             "lease_until": 0.0,
             "event": event,
@@ -200,13 +262,22 @@ def _await_action(action_id: str, event: threading.Event) -> dict[str, Any]:
         return {"ok": False, "error": "worker_timeout"}
 
 
-def _dispatch(op: str, *, session: Optional[Mapping[str, Any]] = None, guild_id: str = "", payload: Optional[Mapping[str, Any]] = None, user_id: str = "") -> dict[str, Any]:
+def _dispatch(op: str, *, session: Optional[Mapping[str, Any]] = None, guild_id: str = "", payload: Optional[Mapping[str, Any]] = None, user_id: str = "", use_cache: bool = False) -> dict[str, Any]:
+    cache_gid = "" if str(op) == "commands_get" else str(guild_id or "")
+    if use_cache:
+        cached = _cache_get(op, cache_gid)
+        if cached is not None:
+            cached["cache_hit"] = True
+            return cached
     if not _worker_fresh():
         return {"ok": False, "error": "worker_offline"}
     if session is not None:
         user_id = str(session.get("user_id") or "")
     action_id, event = _enqueue(op, user_id=user_id, guild_id=guild_id, payload=payload)
-    return _await_action(action_id, event)
+    result = _await_action(action_id, event)
+    if use_cache and result.get("ok"):
+        _cache_put(op, cache_gid, result)
+    return result
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -242,7 +313,7 @@ class Handler(BaseHTTPRequestHandler):
 
     def _body(self) -> dict[str, Any]:
         try:
-            length = max(0, min(262144, _safe_int(self.headers.get("Content-Length"), 0)))
+            length = max(0, min(MAX_BODY_BYTES, _safe_int(self.headers.get("Content-Length"), 0)))
             raw = self.rfile.read(length) if length else b"{}"
             value = json.loads(raw.decode("utf-8", "replace"))
             return value if isinstance(value, dict) else {}
@@ -295,7 +366,15 @@ class Handler(BaseHTTPRequestHandler):
         query = urllib_parse.parse_qs(parsed.query or "")
 
         if path in {"/", "/health", "/healthz"}:
-            self._json(200, {"ok": True, "service": "ABADDON live-feed + dashboard relay", "version": VERSION, "worker_online": _worker_fresh()})
+            with LOCK:
+                queued = sum(1 for row in ACTIONS.values() if str(row.get("status") or "") in {"queued", "leased"})
+                snapshot_cache = sum(1 for key in RESPONSE_CACHE if key.startswith("dashboard_snapshot_get:"))
+                command_cached = _cache_key("commands_get", "") in RESPONSE_CACHE
+            self._json(200, {
+                "ok": True, "service": "ABADDON live-feed + dashboard relay", "version": VERSION,
+                "worker_online": _worker_fresh(), "relay_queue": queued,
+                "snapshot_cache": snapshot_cache, "commands_cached": command_cached,
+            })
             return
         if path == "/api/status":
             with LOCK:
@@ -405,6 +484,7 @@ class Handler(BaseHTTPRequestHandler):
             "/api/dashboard/overview": "overview_get",
             "/api/dashboard/reactions": "reactions_get",
             "/api/dashboard/external": "external_get",
+            "/api/dashboard/snapshot": "dashboard_snapshot_get",
             "/api/dashboard/commands": "commands_get",
         }
         if path in get_map:
@@ -414,8 +494,11 @@ class Handler(BaseHTTPRequestHandler):
             guild_id = str((query.get("guild_id") or [""])[0])
             if not self._require_guild(session, guild_id):
                 return
-            result = _dispatch(get_map[path], session=session, guild_id=guild_id, payload={"guild_id": guild_id})
-            self._json(200 if result.get("ok") else 503, result)
+            op = get_map[path]
+            result = _dispatch(op, session=session, guild_id=guild_id, payload={"guild_id": guild_id}, use_cache=op in CACHE_TTL)
+            error = str(result.get("error") or "")
+            status = 200 if result.get("ok") else (409 if error == "superseded" else 503)
+            self._json(status, result)
             return
 
         if path == "/api/control/pull":
@@ -487,14 +570,20 @@ class Handler(BaseHTTPRequestHandler):
                     "members": max(0, _safe_int(row.get("members"), 0)),
                     "icon": str(row.get("icon") or "")[:500],
                 })
+            incoming_version = str(body.get("version") or "unknown")[:40]
             with LOCK:
+                previous_version = str(WORKER_INDEX.get("version") or "unknown")
                 WORKER_INDEX.clear()
                 WORKER_INDEX.update({
                     "guilds": safe,
-                    "version": str(body.get("version") or "unknown")[:40],
+                    "version": incoming_version,
                     "online": bool(body.get("online")),
                     "updated_at": time.time(),
                 })
+                if previous_version != incoming_version:
+                    RESPONSE_CACHE.pop(_cache_key("commands_get", ""), None)
+                    for key in [k for k in RESPONSE_CACHE if k.startswith("dashboard_snapshot_get:")]:
+                        RESPONSE_CACHE.pop(key, None)
             self._json(200, {"ok": True, "guilds": len(safe), "version": VERSION})
             return
 
@@ -512,6 +601,10 @@ class Handler(BaseHTTPRequestHandler):
                 row["status"] = "done"
                 row["result"] = dict(result)
                 row["done_at"] = time.time()
+                op = str(row.get("op") or "")
+                gid = "" if op == "commands_get" else str(row.get("guild_id") or "")
+                if result.get("ok") and op in CACHE_TTL:
+                    RESPONSE_CACHE[_cache_key(op, gid)] = {"stored_at": time.time(), "value": dict(result)}
                 event = row.get("event")
                 if isinstance(event, threading.Event):
                     event.set()
@@ -533,6 +626,8 @@ class Handler(BaseHTTPRequestHandler):
             if not self._require_guild(session, guild_id):
                 return
             result = _dispatch(post_map[path], session=session, guild_id=guild_id, payload=body)
+            if result.get("ok"):
+                _cache_invalidate_guild(guild_id)
             status = 200 if result.get("ok") else (503 if result.get("error") in {"worker_offline", "worker_timeout"} else 400)
             self._json(status, result)
             return
