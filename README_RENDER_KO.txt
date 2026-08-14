@@ -1,3 +1,10 @@
+ABADDON LIVE FEED v1.4.1 · ABADDON LIFE v1.3.0 호환
+
+- Bot v19.6.2 / ABADDON LIFE v1.3.0 / Website v5.1.2 호환 메타데이터 추가
+- GET /api/compat 추가
+- /health 및 /api/status에 compatibility 정보 포함
+- 기존 FiveM QBCore relay, OAuth, Dashboard relay 동작은 유지
+
 ABADDON LIVE FEED v1.3.0 · CHZZK/SOOP DASHBOARD RELAY + OAUTH + LIVE FEED
 
 이 ZIP은 `abaddon-live-feed` Render Web Service용입니다.

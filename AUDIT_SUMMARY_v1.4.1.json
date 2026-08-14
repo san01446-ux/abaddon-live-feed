@@ -1,0 +1,19 @@
+{
+  "version": "1.4.1",
+  "date": "2026-08-15",
+  "compatibility": {
+    "bot": "19.6.2",
+    "abaddon_life": "1.3.0",
+    "website": "5.1.2"
+  },
+  "changes": [
+    "compat endpoint",
+    "health compatibility metadata",
+    "status compatibility metadata"
+  ],
+  "validation": {
+    "python_ast": true,
+    "compat_endpoint": true,
+    "compat_versions": true
+  }
+}

@@ -13,7 +13,8 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
-VERSION = "1.4.0"
+VERSION = "1.4.1"
+COMPATIBILITY = {"bot": "19.6.2", "abaddon_life": "1.3.0", "website": "5.1.2"}
 MAX_EVENTS = 120
 MAX_BODY_BYTES = 4 * 1024 * 1024
 SESSION_TTL = 60 * 60 * 12
@@ -419,16 +420,20 @@ class Handler(BaseHTTPRequestHandler):
                 snapshot_cache = sum(1 for key in RESPONSE_CACHE if key.startswith("dashboard_snapshot_get:"))
                 command_cached = _cache_key("commands_get", "") in RESPONSE_CACHE
             self._json(200, {
-                "ok": True, "service": "ABADDON live-feed + dashboard relay", "version": VERSION,
+                "ok": True, "service": "ABADDON live-feed + dashboard relay", "version": VERSION, "compatibility": dict(COMPATIBILITY),
                 "worker_online": _worker_fresh(), "relay_queue": queued,
                 "snapshot_cache": snapshot_cache, "commands_cached": command_cached,
                 "fivem_servers": len(FIVEM_STATUS), "fivem_queue": sum(1 for row in FIVEM_ACTIONS.values() if str(row.get("status") or "") != "done"), "fivem_events": len(FIVEM_EVENTS),
             })
             return
+        if path == "/api/compat":
+            self._json(200, {"ok": True, "relay_version": VERSION, "compatibility": dict(COMPATIBILITY)})
+            return
         if path == "/api/status":
             with LOCK:
                 payload = dict(STATUS)
                 payload["relay_version"] = VERSION
+                payload["compatibility"] = dict(COMPATIBILITY)
                 payload["worker_fresh"] = _worker_fresh()
             self._json(200, payload)
             return
