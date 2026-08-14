@@ -13,7 +13,7 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
-VERSION = "1.2.1"
+VERSION = "1.3.0"
 MAX_EVENTS = 120
 MAX_BODY_BYTES = 4 * 1024 * 1024
 SESSION_TTL = 60 * 60 * 12
@@ -616,6 +616,8 @@ class Handler(BaseHTTPRequestHandler):
             "/api/dashboard/reactions": "reactions_set",
             "/api/dashboard/external/youtube": "external_youtube_add",
             "/api/dashboard/external/twitch": "external_twitch_add",
+            "/api/dashboard/external/chzzk": "external_chzzk_add",
+            "/api/dashboard/external/soop": "external_soop_add",
             "/api/dashboard/external/remove": "external_remove",
         }
         if path in post_map:

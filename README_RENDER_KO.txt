@@ -1,4 +1,4 @@
-ABADDON LIVE FEED v1.2.1 · FAST DASHBOARD RELAY + OAUTH + LIVE FEED
+ABADDON LIVE FEED v1.3.0 · CHZZK/SOOP DASHBOARD RELAY + OAUTH + LIVE FEED
 
 이 ZIP은 `abaddon-live-feed` Render Web Service용입니다.
 `apocalypse-bot` Background Worker에 올리는 파일이 아닙니다.
@@ -26,7 +26,12 @@ python live_feed_server.py
 OAuth2 Redirects에 아래 주소가 정확히 등록되어 있어야 합니다.
 https://abaddon-live-feed.onrender.com/auth/callback
 
-[v1.2.1 변경]
+[v1.3.0 변경]
+- Dashboard relay POST에 CHZZK / SOOP 외부 알림 등록 경로 추가
+- 기존 snapshot/cache/빠른 서버 전환 구조는 그대로 유지
+- CHZZK / SOOP API Key는 이 live-feed 서비스가 아니라 apocalypse-bot Background Worker에 둡니다.
+
+[v1.2.1 기반 유지]
 - /api/dashboard/snapshot 추가: 서버별 읽기 5개를 1개 Worker 요청으로 통합
 - snapshot 12초 캐시 + commands 1시간 캐시
 - 빠른 서버 이동 시 아직 Worker가 잡지 않은 이전 읽기 요청 supersede
@@ -44,7 +49,7 @@ https://abaddon-live-feed.onrender.com/auth/callback
 
 [확인 순서]
 1. https://abaddon-live-feed.onrender.com/health 접속
-2. version 1.2.1 확인
+2. version 1.3.0 확인
 3. BOT 배포 후 worker_online true 확인 (보통 다음 Worker poll/heartbeat 이후)
 4. Discord에서 !웹연결진단 또는 !webdiag
 5. 홈페이지 Dashboard -> Discord 로그인
