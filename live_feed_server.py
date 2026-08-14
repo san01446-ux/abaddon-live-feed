@@ -13,7 +13,7 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 MAX_EVENTS = 120
 SESSION_TTL = 60 * 60 * 12
 STATE_TTL = 10 * 60
@@ -270,6 +270,19 @@ class Handler(BaseHTTPRequestHandler):
             return False
         return True
 
+    def do_HEAD(self) -> None:  # noqa: N802
+        parsed = urllib_parse.urlparse(self.path)
+        if parsed.path in {"/", "/health", "/healthz"}:
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json; charset=utf-8")
+            self.send_header("Cache-Control", "no-store, max-age=0")
+            self._cors()
+            self.end_headers()
+            return
+        self.send_response(404)
+        self._cors()
+        self.end_headers()
+
     def do_OPTIONS(self) -> None:  # noqa: N802
         self.send_response(204)
         self._cors()
@@ -335,7 +348,7 @@ class Handler(BaseHTTPRequestHandler):
                 OAUTH_STATES.pop(state, None)
             valid = bool(state and state == cookie_state and info and float(info.get("created", 0)) + STATE_TTL > time.time())
             site = _site_url()
-            page = "/dashboard.html"
+            page = "/en/dashboard.html" if str(info.get("lang") or "ko") == "en" else "/dashboard.html"
             if not valid or not code:
                 self._redirect(f"{site}{page}?error=oauth_state")
                 return

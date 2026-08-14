@@ -1,10 +1,10 @@
-ABADDON LIVE FEED v1.1.0 · DASHBOARD RELAY
+ABADDON LIVE FEED v1.2.0 · OAUTH DASHBOARD + LIVE FEED
 
 이 ZIP은 `abaddon-live-feed` Render Web Service용입니다.
 `apocalypse-bot` Background Worker에 올리는 파일이 아닙니다.
 
 [Render Web Service]
-Root에 이 파일들을 올리고 Start Command를 다음처럼 설정하세요.
+GitHub 저장소 ROOT에 파일을 올리고 Start Command를 아래처럼 유지하세요.
 python live_feed_server.py
 
 필수 Environment
@@ -23,15 +23,24 @@ python live_feed_server.py
 - PUBLIC_FEED_RELAY_KEY = live-feed와 동일한 값
 
 [Discord Developer Portal]
-OAuth2 Redirects에 아래 주소가 등록되어 있어야 합니다.
+OAuth2 Redirects에 아래 주소가 정확히 등록되어 있어야 합니다.
 https://abaddon-live-feed.onrender.com/auth/callback
+
+[v1.2.0 변경]
+- Render HEAD /health 요청 200 응답 지원
+- 한국어 OAuth -> /dashboard.html
+- English OAuth -> /en/dashboard.html
+- /api/status + /api/events 공개 LIVE FEED 유지/복구
+- Dashboard Relay 인증/요청 큐 구조 유지
+- BOT Token은 이 서비스에서 사용하지 않음
 
 [확인 순서]
 1. https://abaddon-live-feed.onrender.com/health 접속
-2. JSON에 worker_online true 확인 (봇 배포 후 최대 약 15초)
-3. Discord에서 !웹연결진단
-4. 홈페이지 Dashboard -> Discord 로그인
-5. 서버 선택 -> 설정 저장
+2. version 1.2.0 확인
+3. BOT 배포 후 worker_online true 확인 (보통 다음 Worker poll/heartbeat 이후)
+4. Discord에서 !웹연결진단 또는 !webdiag
+5. 홈페이지 Dashboard -> Discord 로그인
+6. 서버 선택 -> 설정 / GIF / LIVE / 명령어 탭 확인
 
 보안
 - DISCORD_TOKEN은 live-feed 서비스에 넣지 않습니다.

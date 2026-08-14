@@ -1,0 +1,26 @@
+{
+  "version": "1.2.0",
+  "generated_at_kst": "2026-08-14",
+  "python_compile": "PASS",
+  "local_http_tests": {
+    "GET /health": "200 / version 1.2.0",
+    "HEAD /health": "200",
+    "GET /api/status": "200",
+    "GET /api/events?limit=8": "200",
+    "GET /auth/discord?lang=en": "302 to discord.com/oauth2/authorize with configured redirect_uri",
+    "POST /api/worker/index with relay key": "200",
+    "GET /api/control/pull with relay key": "200"
+  },
+  "routes": [
+    "/health",
+    "/api/status",
+    "/api/events",
+    "/auth/discord",
+    "/auth/callback",
+    "/api/dashboard/*",
+    "/api/worker/index",
+    "/api/control/pull",
+    "/api/control/result"
+  ],
+  "start_command": "python live_feed_server.py"
+}
