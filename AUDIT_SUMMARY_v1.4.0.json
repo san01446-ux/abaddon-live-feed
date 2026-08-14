@@ -1,0 +1,14 @@
+{
+  "version": "1.4.0",
+  "date": "2026-08-15",
+  "component": "ABADDON Live Feed",
+  "feature": "FiveM/QBCore secure two-way relay",
+  "checks": {
+    "python_compile": true,
+    "heartbeat_status": true,
+    "fivem_event_roundtrip": true,
+    "command_success_roundtrip": true,
+    "command_error_roundtrip": true,
+    "separate_fivem_secret": true
+  }
+}

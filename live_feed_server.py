@@ -13,13 +13,15 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
-VERSION = "1.3.0"
+VERSION = "1.4.0"
 MAX_EVENTS = 120
 MAX_BODY_BYTES = 4 * 1024 * 1024
 SESSION_TTL = 60 * 60 * 12
 STATE_TTL = 10 * 60
 ACTION_TTL = 90
 ACTION_WAIT_SECONDS = 15
+FIVEM_ACTION_TTL = 90
+FIVEM_WAIT_SECONDS = 12
 
 LOCK = threading.RLock()
 EVENTS: list[dict[str, Any]] = []
@@ -29,6 +31,9 @@ SESSIONS: dict[str, dict[str, Any]] = {}
 OAUTH_STATES: dict[str, dict[str, Any]] = {}
 ACTIONS: dict[str, dict[str, Any]] = {}
 RESPONSE_CACHE: dict[str, dict[str, Any]] = {}
+FIVEM_ACTIONS: dict[str, dict[str, Any]] = {}
+FIVEM_STATUS: dict[str, dict[str, Any]] = {}
+FIVEM_EVENTS: list[dict[str, Any]] = []
 CACHE_TTL = {"dashboard_snapshot_get": 12.0, "commands_get": 60.0 * 60.0}
 SUPERSEDE_READ_OPS = {"dashboard_snapshot_get", "commands_get"}
 
@@ -46,6 +51,10 @@ def _allowed_origin() -> str:
 
 def _relay_secret() -> str:
     return str(os.getenv("PUBLIC_FEED_RELAY_KEY", "") or os.getenv("ABADDON_FEED_SECRET", "") or "").strip()
+
+
+def _fivem_secret() -> str:
+    return str(os.getenv("ABADDON_FIVEM_BRIDGE_SECRET", "") or "").strip()
 
 
 def _site_url() -> str:
@@ -81,6 +90,17 @@ def _cleanup() -> None:
                 ACTIONS.pop(key, None)
             elif not done_at and created + ACTION_TTL * 3 <= now:
                 ACTIONS.pop(key, None)
+        for key in list(FIVEM_ACTIONS):
+            row = FIVEM_ACTIONS.get(key) or {}
+            created = float(row.get("created", 0))
+            done_at = float(row.get("done_at", 0))
+            if done_at and done_at + 90 <= now:
+                FIVEM_ACTIONS.pop(key, None)
+            elif not done_at and created + FIVEM_ACTION_TTL * 3 <= now:
+                FIVEM_ACTIONS.pop(key, None)
+        for key in list(FIVEM_STATUS):
+            if now - float((FIVEM_STATUS.get(key) or {}).get("received_at", 0) or 0) > 300:
+                FIVEM_STATUS.pop(key, None)
 
 
 
@@ -280,6 +300,29 @@ def _dispatch(op: str, *, session: Optional[Mapping[str, Any]] = None, guild_id:
     return result
 
 
+def _fivem_enqueue(server_id: str, guild_id: str, payload: Mapping[str, Any]) -> tuple[str, threading.Event]:
+    action_id = "fivem_" + secrets.token_urlsafe(18)
+    event = threading.Event()
+    row = {
+        "id": action_id, "server_id": str(server_id), "guild_id": str(guild_id),
+        "payload": dict(payload), "created": time.time(), "status": "queued",
+        "lease_until": 0.0, "event": event, "result": None,
+    }
+    with LOCK:
+        FIVEM_ACTIONS[action_id] = row
+    return action_id, event
+
+
+def _fivem_await(action_id: str, event: threading.Event) -> dict[str, Any]:
+    event.wait(FIVEM_WAIT_SECONDS)
+    with LOCK:
+        row = FIVEM_ACTIONS.get(action_id) or {}
+        result = row.get("result")
+        if isinstance(result, dict):
+            return dict(result)
+        return {"ok": False, "error": "fivem_timeout"}
+
+
 class Handler(BaseHTTPRequestHandler):
     server_version = f"ABADDONLiveFeed/{VERSION}"
 
@@ -291,7 +334,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Access-Control-Allow-Origin", origin)
         self.send_header("Vary", "Origin")
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization, X-ABADDON-Bridge-Key")
 
     def _json(self, status: int, payload: Mapping[str, Any]) -> None:
         raw = json.dumps(dict(payload), ensure_ascii=False, separators=(",", ":")).encode("utf-8")
@@ -324,6 +367,11 @@ class Handler(BaseHTTPRequestHandler):
         secret = _relay_secret()
         value = str(self.headers.get("Authorization") or "")
         return bool(secret and value == f"Bearer {secret}")
+
+    def _fivem_authorized(self) -> bool:
+        secret = _fivem_secret()
+        value = str(self.headers.get("X-ABADDON-Bridge-Key") or "")
+        return bool(secret and secrets.compare_digest(value, secret))
 
     def _require_session(self) -> Optional[dict[str, Any]]:
         session = _session_from_handler(self)
@@ -374,6 +422,7 @@ class Handler(BaseHTTPRequestHandler):
                 "ok": True, "service": "ABADDON live-feed + dashboard relay", "version": VERSION,
                 "worker_online": _worker_fresh(), "relay_queue": queued,
                 "snapshot_cache": snapshot_cache, "commands_cached": command_cached,
+                "fivem_servers": len(FIVEM_STATUS), "fivem_queue": sum(1 for row in FIVEM_ACTIONS.values() if str(row.get("status") or "") != "done"), "fivem_events": len(FIVEM_EVENTS),
             })
             return
         if path == "/api/status":
@@ -501,6 +550,66 @@ class Handler(BaseHTTPRequestHandler):
             self._json(status, result)
             return
 
+        if path == "/api/fivem/pull":
+            if not self._fivem_authorized():
+                self._json(401, {"ok": False, "error": "fivem_unauthorized"})
+                return
+            server_id = str((query.get("server_id") or [""])[0])[:120]
+            guild_id = str((query.get("guild_id") or [""])[0])[:40]
+            now = time.time()
+            rows: list[dict[str, Any]] = []
+            with LOCK:
+                for action in FIVEM_ACTIONS.values():
+                    if len(rows) >= 20:
+                        break
+                    if str(action.get("server_id") or "") != server_id:
+                        continue
+                    if guild_id and str(action.get("guild_id") or "") not in {"", guild_id}:
+                        continue
+                    status = str(action.get("status") or "queued")
+                    lease_until = float(action.get("lease_until", 0) or 0)
+                    if status == "done" or (status == "leased" and lease_until > now):
+                        continue
+                    action["status"] = "leased"
+                    action["lease_until"] = now + 15
+                    rows.append({"id": action.get("id"), "server_id": server_id, "guild_id": action.get("guild_id"), "payload": action.get("payload") or {}})
+            self._json(200, {"ok": True, "actions": rows, "version": VERSION})
+            return
+
+        if path == "/api/fivem/events/pull":
+            if not self._worker_authorized():
+                self._json(401, {"ok": False, "error": "relay_unauthorized"})
+                return
+            guild_id = str((query.get("guild_id") or [""])[0])[:40]
+            limit = max(1, min(50, _safe_int((query.get("limit") or [25])[0], 25)))
+            rows=[]
+            with LOCK:
+                keep=[]
+                for row in FIVEM_EVENTS:
+                    if len(rows)<limit and (not guild_id or str(row.get("guild_id") or "") == guild_id):
+                        rows.append(dict(row))
+                    else:
+                        keep.append(row)
+                FIVEM_EVENTS[:] = keep[-300:]
+            self._json(200, {"ok": True, "events": rows, "version": VERSION})
+            return
+
+        if path == "/api/fivem/status":
+            if not self._worker_authorized():
+                self._json(401, {"ok": False, "error": "relay_unauthorized"})
+                return
+            server_id = str((query.get("server_id") or [""])[0])[:120]
+            with LOCK:
+                row = dict(FIVEM_STATUS.get(server_id) or {})
+            if not row:
+                self._json(200, {"ok": False, "error": "fivem_offline", "server_id": server_id})
+            else:
+                fresh = time.time() - float(row.get("received_at", 0) or 0) <= 35
+                row.update({"ok": fresh, "server_id": server_id, "fresh": fresh})
+                if not fresh: row["error"] = "fivem_stale"
+                self._json(200, row)
+            return
+
         if path == "/api/control/pull":
             if not self._worker_authorized():
                 self._json(401, {"ok": False, "error": "relay_unauthorized"})
@@ -531,6 +640,88 @@ class Handler(BaseHTTPRequestHandler):
         parsed = urllib_parse.urlparse(self.path)
         path = parsed.path
         body = self._body()
+
+        if path == "/api/fivem/command":
+            if not self._worker_authorized():
+                self._json(401, {"ok": False, "error": "relay_unauthorized"})
+                return
+            server_id = str(body.get("server_id") or "")[:120]
+            guild_id = str(body.get("guild_id") or "")[:40]
+            op = str(body.get("op") or "")[:60]
+            allowed = {"status", "announce", "add_money", "remove_money", "set_money", "set_job", "give_item", "give_vehicle", "revive", "kick", "player_info"}
+            if not server_id or op not in allowed:
+                self._json(400, {"ok": False, "error": "invalid_fivem_command"})
+                return
+            payload = dict(body)
+            payload.pop("server_id", None); payload.pop("guild_id", None)
+            action_id, event = _fivem_enqueue(server_id, guild_id, payload)
+            result = _fivem_await(action_id, event)
+            result.setdefault("action_id", action_id)
+            self._json(200, result)
+            return
+
+        if path == "/api/fivem/result":
+            if not self._fivem_authorized():
+                self._json(401, {"ok": False, "error": "fivem_unauthorized"})
+                return
+            action_id = str(body.get("id") or "")
+            result = body.get("result") if isinstance(body.get("result"), dict) else {"ok": False, "error": "invalid_fivem_result"}
+            with LOCK:
+                row = FIVEM_ACTIONS.get(action_id)
+                if row is None:
+                    self._json(404, {"ok": False, "error": "fivem_action_not_found"})
+                    return
+                row["status"] = "done"; row["result"] = dict(result); row["done_at"] = time.time()
+                event = row.get("event")
+                if isinstance(event, threading.Event): event.set()
+            self._json(200, {"ok": True})
+            return
+
+        if path == "/api/fivem/event":
+            if not self._fivem_authorized():
+                self._json(401, {"ok": False, "error": "fivem_unauthorized"})
+                return
+            row = {
+                "server_id": str(body.get("server_id") or "")[:120],
+                "guild_id": str(body.get("guild_id") or "")[:40],
+                "type": str(body.get("type") or "event")[:50],
+                "title": str(body.get("title") or "ABADDON LIFE")[:120],
+                "message": str(body.get("message") or "")[:800],
+                "player_id": _safe_int(body.get("player_id"), 0),
+                "citizenid": str(body.get("citizenid") or "")[:50],
+                "name": str(body.get("name") or "")[:100],
+                "job": str(body.get("job") or "")[:60],
+                "job_code": str(body.get("job_code") or "")[:60],
+                "discord_id": str(body.get("discord_id") or "")[:30],
+                "on_duty": bool(body.get("on_duty")),
+                "created_at": _now(),
+            }
+            if not row["server_id"]:
+                self._json(400,{"ok":False,"error":"missing_server_id"}); return
+            with LOCK:
+                FIVEM_EVENTS.append(row)
+                if len(FIVEM_EVENTS)>500: del FIVEM_EVENTS[:-500]
+            self._json(200,{"ok":True})
+            return
+
+        if path == "/api/fivem/heartbeat":
+            if not self._fivem_authorized():
+                self._json(401, {"ok": False, "error": "fivem_unauthorized"})
+                return
+            server_id = str(body.get("server_id") or "")[:120]
+            if not server_id:
+                self._json(400, {"ok": False, "error": "missing_server_id"})
+                return
+            safe = {
+                "guild_id": str(body.get("guild_id") or "")[:40],
+                "players": max(0, _safe_int(body.get("players"), 0)),
+                "max_players": max(0, _safe_int(body.get("max_players"), 0)),
+                "hostname": str(body.get("hostname") or "ABADDON LIFE")[:120],
+                "received_at": time.time(),
+            }
+            with LOCK: FIVEM_STATUS[server_id] = safe
+            self._json(200, {"ok": True, "server_id": server_id})
+            return
 
         if path == "/api/ingest/event":
             if not self._worker_authorized():
@@ -642,6 +833,7 @@ def main() -> None:
     print(f"[ABADDON live-feed v{VERSION}] starting on 0.0.0.0:{port}", flush=True)
     print(f"[ABADDON live-feed] OAuth redirect: {_oauth_redirect_uri() or 'NOT CONFIGURED'}", flush=True)
     print(f"[ABADDON live-feed] Relay secret: {'configured' if _relay_secret() else 'MISSING'}", flush=True)
+    print(f"[ABADDON live-feed] FiveM bridge secret: {'configured' if _fivem_secret() else 'MISSING'}", flush=True)
     ThreadingHTTPServer(("0.0.0.0", port), Handler).serve_forever()
 
 

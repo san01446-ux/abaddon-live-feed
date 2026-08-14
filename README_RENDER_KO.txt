@@ -49,7 +49,7 @@ https://abaddon-live-feed.onrender.com/auth/callback
 
 [확인 순서]
 1. https://abaddon-live-feed.onrender.com/health 접속
-2. version 1.3.0 확인
+2. version 1.4.0 확인
 3. BOT 배포 후 worker_online true 확인 (보통 다음 Worker poll/heartbeat 이후)
 4. Discord에서 !웹연결진단 또는 !webdiag
 5. 홈페이지 Dashboard -> Discord 로그인
@@ -59,3 +59,38 @@ https://abaddon-live-feed.onrender.com/auth/callback
 - DISCORD_TOKEN은 live-feed 서비스에 넣지 않습니다.
 - DISCORD_OAUTH_CLIENT_SECRET은 GitHub Pages 홈페이지에 넣지 않습니다.
 - PUBLIC_FEED_RELAY_KEY는 홈페이지에 넣지 않습니다.
+
+============================================================
+ABADDON Live Feed v1.4.0 · FiveM/QBCore 양방향 브리지
+============================================================
+추가 Render 환경변수:
+- ABADDON_FIVEM_BRIDGE_SECRET = 충분히 긴 랜덤 문자열 (권장 32자 이상)
+
+이 값은 FiveM server.cfg의 아래 값과 반드시 같아야 합니다.
+  set abaddon_bridge_secret "같은_랜덤_문자열"
+
+보안 구조:
+- Discord Bot -> Live Feed: PUBLIC_FEED_RELAY_KEY (기존)
+- FiveM -> Live Feed: ABADDON_FIVEM_BRIDGE_SECRET (신규)
+- MariaDB 비밀번호 / Cfx Registration Key는 브리지에 사용하지 않습니다.
+
+FiveM에서 필요한 server.cfg 예시:
+  set abaddon_bridge_enabled "true"
+  set abaddon_bridge_relay_url "https://abaddon-live-feed.onrender.com"
+  set abaddon_bridge_server_id "abaddon-life-01"
+  set abaddon_bridge_guild_id "디스코드_서버_ID"
+  set abaddon_bridge_secret "ABADDON_FIVEM_BRIDGE_SECRET와_동일"
+
+Discord 관리자 명령:
+  !인생브리지상태
+  !인생캐릭터 <서버ID>
+  !인생돈지급 <서버ID> <현금|은행> <금액>
+  !인생돈회수 <서버ID> <현금|은행> <금액>
+  !인생잔액설정 <서버ID> <현금|은행> <금액>
+  !인생직업변경 <서버ID> <job> <grade>
+  !인생아이템지급 <서버ID> <item> [수량]
+  !인생차량지급 <서버ID> <차량모델> [차고]
+  !인생역할설정 <직업코드> @역할
+  !인생소생 <서버ID>
+  !인생공지 <내용>
+  !인생킥 <서버ID> [사유]
