@@ -1,11 +1,11 @@
-ABADDON LIVE FEED v1.4.1 · ABADDON LIFE v1.3.0 호환
+ABADDON LIVE FEED v1.5.0 · ABADDON LIFE v1.4.0 호환
 
-- Bot v19.6.2 / ABADDON LIFE v1.3.0 / Website v5.1.2 호환 메타데이터 추가
+- Bot v19.6.3 / ABADDON LIFE v1.4.0 / Website v5.1.3 호환 메타데이터 추가
 - GET /api/compat 추가
 - /health 및 /api/status에 compatibility 정보 포함
 - 기존 FiveM QBCore relay, OAuth, Dashboard relay 동작은 유지
 
-ABADDON LIVE FEED v1.3.0 · CHZZK/SOOP DASHBOARD RELAY + OAUTH + LIVE FEED
+ABADDON LIVE FEED v1.4.0 · CHZZK/SOOP DASHBOARD RELAY + OAUTH + LIVE FEED
 
 이 ZIP은 `abaddon-live-feed` Render Web Service용입니다.
 `apocalypse-bot` Background Worker에 올리는 파일이 아닙니다.
@@ -33,7 +33,7 @@ python live_feed_server.py
 OAuth2 Redirects에 아래 주소가 정확히 등록되어 있어야 합니다.
 https://abaddon-live-feed.onrender.com/auth/callback
 
-[v1.3.0 변경]
+[v1.4.0 변경]
 - Dashboard relay POST에 CHZZK / SOOP 외부 알림 등록 경로 추가
 - 기존 snapshot/cache/빠른 서버 전환 구조는 그대로 유지
 - CHZZK / SOOP API Key는 이 live-feed 서비스가 아니라 apocalypse-bot Background Worker에 둡니다.

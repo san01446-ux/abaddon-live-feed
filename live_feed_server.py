@@ -13,8 +13,8 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
-VERSION = "1.4.1"
-COMPATIBILITY = {"bot": "19.6.2", "abaddon_life": "1.3.0", "website": "5.1.2"}
+VERSION = "1.5.0"
+COMPATIBILITY = {"bot": "19.6.3", "abaddon_life": "1.4.0", "website": "5.1.3"}
 MAX_EVENTS = 120
 MAX_BODY_BYTES = 4 * 1024 * 1024
 SESSION_TTL = 60 * 60 * 12
@@ -423,11 +423,22 @@ class Handler(BaseHTTPRequestHandler):
                 "ok": True, "service": "ABADDON live-feed + dashboard relay", "version": VERSION, "compatibility": dict(COMPATIBILITY),
                 "worker_online": _worker_fresh(), "relay_queue": queued,
                 "snapshot_cache": snapshot_cache, "commands_cached": command_cached,
+                "relay_key_configured": bool(_relay_secret()),
+                "fivem_bridge_configured": bool(_fivem_secret()),
+                "oauth_configured": bool(str(os.getenv("DISCORD_OAUTH_CLIENT_ID", "") or "").strip() and str(os.getenv("DISCORD_OAUTH_CLIENT_SECRET", "") or "").strip()),
                 "fivem_servers": len(FIVEM_STATUS), "fivem_queue": sum(1 for row in FIVEM_ACTIONS.values() if str(row.get("status") or "") != "done"), "fivem_events": len(FIVEM_EVENTS),
             })
             return
         if path == "/api/compat":
             self._json(200, {"ok": True, "relay_version": VERSION, "compatibility": dict(COMPATIBILITY)})
+            return
+        if path == "/api/bridge/diagnostics":
+            with LOCK:
+                servers=[]
+                for sid,row in FIVEM_STATUS.items():
+                    age=max(0,int(time.time()-float((row or {}).get("received_at",0) or 0)))
+                    servers.append({"server_id":sid,"fresh":age<=35,"age_seconds":age,"players":int((row or {}).get("players") or 0),"hostname":str((row or {}).get("hostname") or "")[:120]})
+            self._json(200,{"ok":True,"version":VERSION,"relay_key_configured":bool(_relay_secret()),"fivem_bridge_configured":bool(_fivem_secret()),"worker_online":_worker_fresh(),"servers":servers})
             return
         if path == "/api/status":
             with LOCK:

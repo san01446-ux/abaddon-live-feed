@@ -1,0 +1,10 @@
+{
+  "version": "1.5.0",
+  "compatibility": {
+    "bot": "19.6.3",
+    "abaddon_life": "1.4.0",
+    "website": "5.1.3"
+  },
+  "github_root_ready": true,
+  "bridge_diagnostics": true
+}

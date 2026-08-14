@@ -1,14 +1,20 @@
 services:
   - type: web
     name: abaddon-live-feed
-    runtime: python
-    buildCommand: echo "ABADDON feed uses Python standard library only"
-    startCommand: python -m abaddon_feed_service.app
-    healthCheckPath: /healthz
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python live_feed_server.py
+    autoDeploy: true
     envVars:
-      - key: ABADDON_FEED_SECRET
+      - key: PUBLIC_FEED_RELAY_KEY
+        sync: false
+      - key: ABADDON_FIVEM_BRIDGE_SECRET
+        sync: false
+      - key: DISCORD_OAUTH_CLIENT_ID
+        sync: false
+      - key: DISCORD_OAUTH_CLIENT_SECRET
+        sync: false
+      - key: DISCORD_OAUTH_REDIRECT_URI
         sync: false
       - key: PUBLIC_FEED_ALLOWED_ORIGIN
         sync: false
-      - key: FEED_OFFLINE_AFTER_SECONDS
-        value: "150"
