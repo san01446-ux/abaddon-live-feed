@@ -1,0 +1,14 @@
+{
+  "version": "1.10.0",
+  "abaddon_life": "2.5.0",
+  "outbreak": "2.5.0",
+  "features": [
+    "survivors",
+    "raiders",
+    "contracts",
+    "reputation",
+    "civilian_outbreak"
+  ],
+  "api_changes": "none",
+  "validation": "python compile pass"
+}

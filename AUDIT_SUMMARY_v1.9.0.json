@@ -1,0 +1,12 @@
+{
+  "version": "1.9.0",
+  "abaddon_life": "2.4.0",
+  "outbreak": "2.4.0",
+  "events": [
+    "outbreak_horde",
+    "outbreak_horde_clear",
+    "outbreak_finale",
+    "outbreak_scavenge"
+  ],
+  "validation": "python compile pass"
+}

@@ -1,0 +1,14 @@
+{
+  "version": "1.10.4",
+  "abaddon_life": "2.5.6",
+  "outbreak": "2.5.6",
+  "features": [
+    "join_guard",
+    "fresh_infection_reset",
+    "godmode_guard",
+    "friendly_dialogue",
+    "auto_reload"
+  ],
+  "api_changes": "compatible",
+  "validation": "python compile pass"
+}

@@ -1,0 +1,14 @@
+{
+  "version": "1.10.3",
+  "abaddon_life": "2.5.3",
+  "outbreak": "2.5.3",
+  "features": [
+    "infection_care",
+    "loot_fallback",
+    "civilian_panic",
+    "korean_admin_search",
+    "chat_fix"
+  ],
+  "api_changes": "compatible",
+  "validation": "python compile pass"
+}

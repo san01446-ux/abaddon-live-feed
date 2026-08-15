@@ -1,0 +1,10 @@
+{
+  "version": "1.6.0",
+  "compatibility": {"bot":"19.6.3","abaddon_life":"2.0.0","outbreak":"2.0.0"},
+  "features": {
+    "generic_fivem_bridge_retained": true,
+    "outbreak_event_fields": true,
+    "outbreak_status_endpoint": "/api/fivem/outbreak",
+    "existing_secrets_unchanged": true
+  }
+}

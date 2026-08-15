@@ -1,0 +1,12 @@
+{
+  "version": "1.10.1",
+  "abaddon_life": "2.5.1",
+  "outbreak": "2.5.1",
+  "features": [
+    "population_shift",
+    "civilian_in_place_conversion",
+    "chat_collision_fix"
+  ],
+  "api_changes": "none",
+  "validation": "python compile pass"
+}

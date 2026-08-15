@@ -1,0 +1,12 @@
+{
+  "version": "1.7.0",
+  "abaddon_life": "2.2.0",
+  "outbreak": "2.2.0",
+  "features": [
+    "supply",
+    "rescue",
+    "government_broadcast",
+    "special_infected"
+  ],
+  "status": "validated"
+}

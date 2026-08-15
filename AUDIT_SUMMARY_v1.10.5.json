@@ -1,0 +1,13 @@
+{
+  "version": "1.10.5",
+  "abaddon_life": "2.5.7",
+  "outbreak": "2.5.7",
+  "bot": "19.6.3",
+  "website": "5.1.3",
+  "api_schema_changed": false,
+  "env_changed": false,
+  "notes": [
+    "reentry_ui_hardening_compatibility",
+    "no_bridge_contract_change"
+  ]
+}

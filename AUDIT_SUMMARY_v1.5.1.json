@@ -1,0 +1,10 @@
+{
+  "version": "1.5.1",
+  "compatibility": {
+    "bot": "19.6.3",
+    "abaddon_life": "1.6.0",
+    "website": "5.1.3"
+  },
+  "change": "compatibility metadata update for ABADDON LIFE v1.6.0 tactical ESC map overhaul",
+  "api_behavior_changed": false
+}

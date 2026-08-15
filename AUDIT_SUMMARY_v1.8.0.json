@@ -1,0 +1,10 @@
+{
+  "version": "1.8.0",
+  "abaddon_life": "2.3.0",
+  "outbreak": "2.3.0",
+  "changes": [
+    "outbreak_phase_auto compatible",
+    "compatibility metadata updated"
+  ],
+  "validation": "python compile pass"
+}

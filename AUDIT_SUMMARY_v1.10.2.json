@@ -1,0 +1,12 @@
+{
+  "version": "1.10.2",
+  "abaddon_life": "2.5.2",
+  "outbreak": "2.5.2",
+  "features": [
+    "infected_identity",
+    "custom_zombie_attack",
+    "infected_markers"
+  ],
+  "api_changes": "none",
+  "validation": "python compile pass"
+}

@@ -13,8 +13,8 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
-VERSION = "1.5.0"
-COMPATIBILITY = {"bot": "19.6.3", "abaddon_life": "1.4.0", "website": "5.1.3"}
+VERSION = "1.10.5"
+COMPATIBILITY = {"bot": "19.6.3", "abaddon_life": "2.5.7", "website": "5.1.3", "outbreak": "2.5.7"}
 MAX_EVENTS = 120
 MAX_BODY_BYTES = 4 * 1024 * 1024
 SESSION_TTL = 60 * 60 * 12
@@ -35,6 +35,7 @@ RESPONSE_CACHE: dict[str, dict[str, Any]] = {}
 FIVEM_ACTIONS: dict[str, dict[str, Any]] = {}
 FIVEM_STATUS: dict[str, dict[str, Any]] = {}
 FIVEM_EVENTS: list[dict[str, Any]] = []
+FIVEM_OUTBREAK: dict[str, dict[str, Any]] = {}
 CACHE_TTL = {"dashboard_snapshot_get": 12.0, "commands_get": 60.0 * 60.0}
 SUPERSEDE_READ_OPS = {"dashboard_snapshot_get", "commands_get"}
 
@@ -448,6 +449,16 @@ class Handler(BaseHTTPRequestHandler):
                 payload["worker_fresh"] = _worker_fresh()
             self._json(200, payload)
             return
+        if path == "/api/fivem/outbreak":
+            server_id = str((query.get("server_id") or [""])[0] or "")[:120]
+            with LOCK:
+                if server_id:
+                    row = dict(FIVEM_OUTBREAK.get(server_id) or {})
+                    self._json(200, {"ok": True, "outbreak": row or None, "version": VERSION})
+                else:
+                    self._json(200, {"ok": True, "outbreak": [dict(v) for v in FIVEM_OUTBREAK.values()], "version": VERSION})
+            return
+
         if path == "/api/events":
             limit = max(1, min(50, _safe_int((query.get("limit") or [10])[0], 10)))
             with LOCK:
@@ -710,6 +721,15 @@ class Handler(BaseHTTPRequestHandler):
                 "job_code": str(body.get("job_code") or "")[:60],
                 "discord_id": str(body.get("discord_id") or "")[:30],
                 "on_duty": bool(body.get("on_duty")),
+                "phase": _safe_int(body.get("phase"), 0),
+                "active": bool(body.get("active")),
+                "mode": str(body.get("mode") or "")[:30],
+                "infection": max(0, min(100, _safe_int(body.get("infection"), 0))),
+                "kills": max(0, _safe_int(body.get("kills"), 0)),
+                "total_kills": max(0, _safe_int(body.get("total_kills"), 0)),
+                "mission_type": str(body.get("mission_type") or "")[:30],
+                "mission_label": str(body.get("mission_label") or body.get("message") or "")[:160],
+                "region_status": str(body.get("region_status") or "")[:50],
                 "created_at": _now(),
             }
             if not row["server_id"]:
@@ -717,6 +737,21 @@ class Handler(BaseHTTPRequestHandler):
             with LOCK:
                 FIVEM_EVENTS.append(row)
                 if len(FIVEM_EVENTS)>500: del FIVEM_EVENTS[:-500]
+                if row["type"].startswith("outbreak_"):
+                    previous = dict(FIVEM_OUTBREAK.get(row["server_id"]) or {})
+                    previous.update({
+                        "server_id": row["server_id"],
+                        "guild_id": row["guild_id"],
+                        "type": row["type"],
+                        "title": row["title"],
+                        "message": row["message"],
+                        "phase": row["phase"],
+                        "active": row["active"],
+                        "mode": row["mode"],
+                        "total_kills": row["total_kills"],
+                        "updated_at": row["created_at"],
+                    })
+                    FIVEM_OUTBREAK[row["server_id"]] = previous
             self._json(200,{"ok":True})
             return
 

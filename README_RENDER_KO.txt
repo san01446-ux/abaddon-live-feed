@@ -1,6 +1,6 @@
-ABADDON LIVE FEED v1.5.0 · ABADDON LIFE v1.4.0 호환
+ABADDON LIVE FEED v1.6.0 · ABADDON LIFE v2.0.0 OUTBREAK 호환
 
-- Bot v19.6.3 / ABADDON LIFE v1.4.0 / Website v5.1.3 호환 메타데이터 추가
+- Bot v19.6.3 / ABADDON LIFE v2.0.0 / OUTBREAK v2.0.0 / Website v5.1.3 호환
 - GET /api/compat 추가
 - /health 및 /api/status에 compatibility 정보 포함
 - 기존 FiveM QBCore relay, OAuth, Dashboard relay 동작은 유지
