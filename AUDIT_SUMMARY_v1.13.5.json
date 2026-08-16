@@ -1,0 +1,6 @@
+{
+  "version": "1.13.5",
+  "date": "2026-08-16",
+  "compatibility": {"bot":"19.6.5","life":"2.8.5","outbreak":"2.8.5","website":"5.1.6"},
+  "notes": ["auto quest GPS compatibility", "starter pack compatibility", "relay contract unchanged"]
+}

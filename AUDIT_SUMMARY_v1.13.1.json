@@ -1,0 +1,18 @@
+{
+  "version": "1.13.1",
+  "compatibility": {
+    "bot": "19.6.5",
+    "abaddon_life": "2.8.1",
+    "website": "5.1.6",
+    "outbreak": "2.8.1"
+  },
+  "status": "PASS",
+  "reason": "v2.8.1 stability metadata; relay API unchanged",
+  "features": [
+    "cevent_pool_guard",
+    "magazine_ledger",
+    "cluster_radar",
+    "single_hud",
+    "ground_lock"
+  ]
+}

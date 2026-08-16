@@ -1,0 +1,9 @@
+{
+  "version": "1.12.2",
+  "abaddon_life": "2.7.1",
+  "outbreak": "2.7.1",
+  "bot": "19.6.4",
+  "website": "5.1.4",
+  "api_contract_changed": false,
+  "reason": "bot maintenance/hint hotfix compatibility metadata"
+}

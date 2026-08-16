@@ -1,0 +1,15 @@
+{
+  "version": "1.13.7",
+  "generated_at_utc": "2026-08-16T05:41:22.660334+00:00",
+  "compatibility": {
+    "bot": "19.6.5",
+    "abaddon_life": "2.8.7",
+    "website": "5.1.6",
+    "outbreak": "2.8.7"
+  },
+  "changes": [
+    "LIFE 2.8.7 compatibility metadata",
+    "NPC life hub / field workers",
+    "inventory item identity cards"
+  ]
+}

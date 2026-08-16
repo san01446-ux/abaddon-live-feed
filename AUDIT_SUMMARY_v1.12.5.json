@@ -1,0 +1,11 @@
+{
+  "version": "1.12.5",
+  "compatibility": {
+    "bot": "19.6.5",
+    "abaddon_life": "2.7.2",
+    "website": "5.1.6",
+    "outbreak": "2.7.2"
+  },
+  "api_contract_changed": false,
+  "reason": "LIFE v2.7.2 reentry/UI/auto-reload stability compatibility; relay API/event contract unchanged"
+}

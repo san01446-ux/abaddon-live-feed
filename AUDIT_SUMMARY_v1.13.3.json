@@ -1,0 +1,16 @@
+{
+  "version": "1.13.3",
+  "compatibility": {
+    "bot": "19.6.5",
+    "abaddon_life": "2.8.3",
+    "website": "5.1.6",
+    "outbreak": "2.8.3"
+  },
+  "reason": "LIFE v2.8.3 multi-stage escape protocol compatibility; relay API unchanged",
+  "events": [
+    "outbreak_escape_prep",
+    "outbreak_escape_prep_complete",
+    "outbreak_escape_open",
+    "outbreak_escape_complete"
+  ]
+}

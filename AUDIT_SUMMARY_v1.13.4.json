@@ -1,0 +1,6 @@
+{
+  "version": "1.13.4",
+  "compatibility": {"bot": "19.6.5", "abaddon_life": "2.8.4", "outbreak": "2.8.4", "website": "5.1.6"},
+  "change": "native magazine reload hotfix compatibility metadata; relay API unchanged",
+  "date": "2026-08-16"
+}

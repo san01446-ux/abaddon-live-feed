@@ -1,0 +1,13 @@
+{
+  "version": "1.11.1",
+  "abaddon_life": "2.6.1",
+  "outbreak": "2.6.1",
+  "bot": "19.6.3",
+  "website": "5.1.3",
+  "checks": [
+    "python py_compile",
+    "outbreak_* event ingestion unchanged",
+    "v2.6.1 combat hotfix requires no API schema change",
+    "health/compatibility metadata bumped"
+  ]
+}

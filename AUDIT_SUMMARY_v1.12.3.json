@@ -1,0 +1,10 @@
+{
+  "version": "1.12.3",
+  "compatibility": {
+    "bot": "19.6.5",
+    "abaddon_life": "2.7.1",
+    "website": "5.1.5",
+    "outbreak": "2.7.1"
+  },
+  "api_schema_changed": false
+}

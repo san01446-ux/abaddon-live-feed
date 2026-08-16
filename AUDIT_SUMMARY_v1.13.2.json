@@ -1,0 +1,14 @@
+{
+  "version": "1.13.2",
+  "compatibility": {
+    "bot": "19.6.5",
+    "abaddon_life": "2.8.2",
+    "website": "5.1.6",
+    "outbreak": "2.8.2"
+  },
+  "reason": "LIFE v2.8.2 combat/reload/HUD/inventory-armory UI compatibility; relay API unchanged",
+  "checks": {
+    "python_compile": true,
+    "api_contract_changed": false
+  }
+}

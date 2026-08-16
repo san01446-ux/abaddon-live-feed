@@ -13,8 +13,8 @@ from urllib import error as urllib_error
 from urllib import parse as urllib_parse
 from urllib import request as urllib_request
 
-VERSION = "1.10.5"
-COMPATIBILITY = {"bot": "19.6.3", "abaddon_life": "2.5.7", "website": "5.1.3", "outbreak": "2.5.7"}
+VERSION = "1.13.9"
+COMPATIBILITY = {"bot": "19.6.5", "abaddon_life": "2.10.0", "website": "5.1.6", "outbreak": "2.10.0"}
 MAX_EVENTS = 120
 MAX_BODY_BYTES = 4 * 1024 * 1024
 SESSION_TTL = 60 * 60 * 12

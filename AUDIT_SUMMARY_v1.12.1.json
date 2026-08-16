@@ -1,0 +1,13 @@
+{
+  "version": "1.12.1",
+  "abaddon_life": "2.7.1",
+  "outbreak": "2.7.1",
+  "bot": "19.6.3",
+  "website": "5.1.3",
+  "schema_changed": false,
+  "notes": [
+    "combat direct client hotfix",
+    "special infected horror visual detail",
+    "API schema unchanged"
+  ]
+}

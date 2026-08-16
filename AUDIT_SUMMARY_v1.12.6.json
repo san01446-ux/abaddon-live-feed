@@ -1,0 +1,11 @@
+{
+  "version": "1.12.6",
+  "compatibility": {
+    "bot": "19.6.5",
+    "abaddon_life": "2.7.3",
+    "website": "5.1.6",
+    "outbreak": "2.7.3"
+  },
+  "status": "PASS",
+  "reason": "LIFE v2.7.3 safe-zone/interactions/admin-item/reload/UI compatibility; relay API/event contract unchanged"
+}

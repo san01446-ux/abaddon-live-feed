@@ -1,0 +1,8 @@
+ABADDON LIVE FEED v1.13.9 COMPATIBILITY NOTE
+
+- BOT: v19.6.5
+- Website: v5.1.6
+- ABADDON LIFE: v2.10.0
+- OUTBREAK: v2.10.0
+- KRW economy / life activity / seafood expansion compatibility metadata updated.
+- Existing relay endpoints and payload structure are preserved.

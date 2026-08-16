@@ -1,0 +1,11 @@
+{
+  "version": "1.12.4",
+  "compatibility": {
+    "bot": "19.6.5",
+    "abaddon_life": "2.7.1",
+    "website": "5.1.6",
+    "outbreak": "2.7.1"
+  },
+  "api_contract_changed": false,
+  "reason": "website privacy localization metadata sync"
+}

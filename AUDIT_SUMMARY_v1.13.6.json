@@ -1,0 +1,16 @@
+{
+  "version": "1.13.6",
+  "compatibility": {
+    "bot": "19.6.5",
+    "abaddon_life": "2.8.6",
+    "website": "5.1.6",
+    "outbreak": "2.8.6"
+  },
+  "relay_contract": "unchanged",
+  "changes": [
+    "UI readability/chat placement/nameplates",
+    "phone service center",
+    "persistent 1-3 quick slots and nearby drop zone",
+    "Korean fishing/life activities"
+  ]
+}

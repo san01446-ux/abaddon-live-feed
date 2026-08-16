@@ -1,6 +1,6 @@
-ABADDON LIVE FEED v1.6.0 · ABADDON LIFE v2.0.0 OUTBREAK 호환
+ABADDON LIVE FEED v1.13.5 · ABADDON LIFE v2.8.5 OUTBREAK 호환
 
-- Bot v19.6.3 / ABADDON LIFE v2.0.0 / OUTBREAK v2.0.0 / Website v5.1.3 호환
+- Bot v19.6.5 / ABADDON LIFE v2.8.5 / OUTBREAK v2.8.5 / Website v5.1.6 호환
 - GET /api/compat 추가
 - /health 및 /api/status에 compatibility 정보 포함
 - 기존 FiveM QBCore relay, OAuth, Dashboard relay 동작은 유지
@@ -56,7 +56,7 @@ https://abaddon-live-feed.onrender.com/auth/callback
 
 [확인 순서]
 1. https://abaddon-live-feed.onrender.com/health 접속
-2. version 1.4.0 확인
+2. version 1.12.6 확인
 3. BOT 배포 후 worker_online true 확인 (보통 다음 Worker poll/heartbeat 이후)
 4. Discord에서 !웹연결진단 또는 !webdiag
 5. 홈페이지 Dashboard -> Discord 로그인

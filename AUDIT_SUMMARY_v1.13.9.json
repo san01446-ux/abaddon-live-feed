@@ -1,0 +1,15 @@
+{
+  "version": "1.13.9",
+  "date": "2026-08-16",
+  "compatibility": {
+    "bot": "19.6.5",
+    "abaddon_life": "2.10.0",
+    "website": "5.1.6",
+    "outbreak": "2.10.0"
+  },
+  "changes": [
+    "LIFE v2.10.0 KRW economy rebalance compatibility metadata",
+    "OUTBREAK reward economy v2.10.0 compatibility metadata",
+    "Seafood market / life activity economy expansion requires no Live Feed protocol break"
+  ]
+}

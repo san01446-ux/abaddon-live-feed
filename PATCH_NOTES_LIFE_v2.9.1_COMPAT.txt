@@ -1,0 +1,6 @@
+ABADDON LIVE FEED COMPATIBILITY NOTE
+
+- Base: LIVE FEED v1.13.8
+- Compatible target: ABADDON LIFE v2.9.1 2ND FOOD EXPANSION
+- No breaking Live Feed structure changes were required for this food/shop expansion patch.
+- Food sample preview package included separately.

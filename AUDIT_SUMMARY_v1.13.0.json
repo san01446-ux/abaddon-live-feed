@@ -1,0 +1,18 @@
+{
+  "version": "1.13.0",
+  "compatibility": {
+    "bot": "19.6.5",
+    "abaddon_life": "2.8.0",
+    "website": "5.1.6",
+    "outbreak": "2.8.0"
+  },
+  "status": "PASS",
+  "reason": "Fallen City v2.8.0 compatibility metadata; relay API contract unchanged",
+  "features": [
+    "acoustic_hunting",
+    "silent_escape",
+    "survivor_camps",
+    "civilian_resistance",
+    "phase4_war"
+  ]
+}

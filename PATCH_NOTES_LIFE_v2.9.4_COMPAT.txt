@@ -1,0 +1,5 @@
+ABADDON LIVE FEED COMPATIBILITY NOTE
+
+- Base: LIVE FEED v1.13.8
+- Compatible target: ABADDON LIFE v2.9.4 LIFE ACTIVITY / UI / FISHING FIX
+- Inventory/shop UI, fishing water validation and seafood image changes do not break the current Live Feed bridge.
